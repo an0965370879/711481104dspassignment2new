@@ -15,18 +15,19 @@ NUM_POINTS_HALF = 4096 # 頻率響應的計算點數 (只算 0 到 pi)
 RADIUS = 0.95 # H2(z) 的半徑
 
 # --- Q3 訊號 x[n] 參數 ---
-TOTAL_LENGTH = 301     # 訊號總長度
-# 振幅
-A1 = 0.8  # 0.8pi (第一段)
-A2 = 1.0  # 0.2pi (第二段)
-A3 = 0.5  # 0.4pi (第三段)
+TOTAL_LENGTH = 300     # 訊號總長度
 # 長度
-N1 = 81
-N2 = 51
-N3 = 61
-L_silence = 10
+N1 = 60
+N2 = 60
+N3 = 60
 
-# ==============================================================================
+# 振幅
+A1 = 1.0  # 0.8pi (第一段)
+A2 = 1.0  # 0.2pi (第二段)
+A3 = 1.0  # 0.4pi (第三段)
+
+L_silence = 0
+
 # 2. 共同資源定義 (H(z) 與 x[n])
 # ==============================================================================
 # 在此定義的變數，將被後續所有任務共同使用
@@ -69,8 +70,6 @@ x_n_unpadded = np.concatenate((x1_chirp, silence, x2_chirp, silence, x3_chirp))
 x_n_padded = np.pad(x_n_unpadded, (0, TOTAL_LENGTH - len(x_n_unpadded)), 'constant')
 print("--- 輸入訊號 x[n] 產生完畢 ---")
 
-
-# ==============================================================================
 # 3. 執行緒序 (Bonus): 分析 H(z) 的頻率響應 (繪製兩張圖)
 #    (採用數值穩定的「響應疊加」法)
 # ==============================================================================
@@ -106,28 +105,39 @@ final_group_delay = gd1_vals + 2 * total_h2_gd
 plt.style.use('default')
 w_plot = w / np.pi # 將頻率軸正規化
 
+# --- (建議) 增加 Pi 刻度標籤的定義 ---
+import numpy as np # 確保 numpy 已匯入
+tick_locs = [-np.pi, -0.8*np.pi, -0.6*np.pi, -0.4*np.pi, -0.2*np.pi, 0, 
+             0.2*np.pi, 0.4*np.pi, 0.6*np.pi, 0.8*np.pi, np.pi]
+tick_labels = ['-π', '-0.8π', '-0.6π', '-0.4π', '-0.2π', '0', 
+               '0.2π', '0.4π', '0.6π', '0.8π', 'π']
+
 # --- 第一張圖: 相位 (Phase) ---
 fig_phase, axs_phase = plt.subplots(2, 1, figsize=(10, 8)) # 2 行, 1 列
 fig_phase.suptitle('Bonus Figure 1: Phase Response of H(z)', fontsize=16)
 
 # 圖 1(a): Principal Value Phase (奇對稱)
-axs_phase[0].plot(w_plot, principal_phase)
+axs_phase[0].plot(w, principal_phase) # *** 修改：使用 w ***
 current_color = axs_phase[0].lines[0].get_color()
-axs_phase[0].plot(-w_plot, -principal_phase, color=current_color)
+axs_phase[0].plot(-w, -principal_phase, color=current_color) # *** 修改：使用 -w ***
 axs_phase[0].set_title('Calculated Principal Value of Phase Response', fontsize=12)
-axs_phase[0].set_xlabel('Normalized Frequency (ω / π)')
+axs_phase[0].set_xlabel('Frequency ω (radians)') # *** 修改：X 軸標籤 ***
 axs_phase[0].set_ylabel('ARG[H(e$^{jω}$)] (radians)')
-axs_phase[0].set_xlim([-1, 1])
+axs_phase[0].set_xlim([-np.pi, np.pi]) # *** 修改：X 軸範圍 ***
+axs_phase[0].set_xticks(tick_locs) # *** 新增：設定 X 軸刻度 ***
+axs_phase[0].set_xticklabels(tick_labels) # *** 新增：設定 X 軸標籤 ***
 axs_phase[0].grid(True, linestyle=':')
 
 # 圖 1(b): Continuous (Unwrapped) Phase (奇對稱)
-axs_phase[1].plot(w_plot, unwrapped_phase)
+axs_phase[1].plot(w, unwrapped_phase) # *** 修改：使用 w ***
 current_color = axs_phase[1].lines[0].get_color()
-axs_phase[1].plot(-w_plot, -unwrapped_phase, color=current_color)
+axs_phase[1].plot(-w, -unwrapped_phase, color=current_color) # *** 修改：使用 -w ***
 axs_phase[1].set_title('Calculated Continuous (Unwrapped) Phase Response', fontsize=12)
-axs_phase[1].set_xlabel('Normalized Frequency (ω / π)')
+axs_phase[1].set_xlabel('Frequency ω (radians)') # *** 修改：X 軸標籤 ***
 axs_phase[1].set_ylabel('arg[H(e$^{jω}$)] (radians)')
-axs_phase[1].set_xlim([-1, 1])
+axs_phase[1].set_xlim([-np.pi, np.pi]) # *** 修改：X 軸範圍 ***
+axs_phase[1].set_xticks(tick_locs) # *** 新增：設定 X 軸刻度 ***
+axs_phase[1].set_xticklabels(tick_labels) # *** 新增：設定 X 軸標籤 ***
 axs_phase[1].grid(True, linestyle=':')
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -135,29 +145,40 @@ plt.show() # *** 顯示第一張圖 ***
 
 print("--- Q1繪圖完成 ---")
 
+# --- (建議) 確保 Pi 刻度標籤已定義 ---
+import numpy as np # 確保 numpy 已匯入
+tick_locs = [-np.pi, -0.8*np.pi, -0.6*np.pi, -0.4*np.pi, -0.2*np.pi, 0, 
+             0.2*np.pi, 0.4*np.pi, 0.6*np.pi, 0.8*np.pi, np.pi]
+tick_labels = ['-π', '-0.8π', '-0.6π', '-0.4π', '-0.2π', '0', 
+               '0.2π', '0.4π', '0.6π', '0.8π', 'π']
+
 # --- 第二張圖: 群延遲 (Group Delay) & 幅度 (Magnitude) ---
 fig_gm, axs_gm = plt.subplots(2, 1, figsize=(10, 8)) # 2 行, 1 列
 fig_gm.suptitle('Bonus Figure 2: Group Delay & Magnitude Response of H(z)', fontsize=16)
 
 # 圖 2(a): Group Delay (偶對稱)
-axs_gm[0].plot(w_plot, final_group_delay)
+axs_gm[0].plot(w, final_group_delay) # *** 修改：使用 w ***
 current_color = axs_gm[0].lines[0].get_color()
-axs_gm[0].plot(-w_plot, final_group_delay, color=current_color)
+axs_gm[0].plot(-w, final_group_delay, color=current_color) # *** 修改：使用 -w ***
 axs_gm[0].set_title('Calculated Group Delay', fontsize=12)
-axs_gm[0].set_xlabel('Normalized Frequency (ω / π)')
+axs_gm[0].set_xlabel('Frequency ω (radians)') # *** 修改：X 軸標籤 ***
 axs_gm[0].set_ylabel('grd[H(e$^{jω}$)] (samples)')
-axs_gm[0].set_xlim([-1, 1])
-axs_gm[0].set_ylim([-50, 200])
+axs_gm[0].set_xlim([-np.pi, np.pi]) # *** 修改：X 軸範圍 ***
+axs_gm[0].set_ylim([-50, 200]) # (Y 軸範圍保持不變)
+axs_gm[0].set_xticks(tick_locs) # *** 新增：設定 X 軸刻度 ***
+axs_gm[0].set_xticklabels(tick_labels) # *** 新增：設定 X 軸標籤 ***
 axs_gm[0].grid(True, linestyle=':')
 
 # 圖 2(b): Magnitude Response (偶對稱)
-axs_gm[1].plot(w_plot, final_magnitude)
+axs_gm[1].plot(w, final_magnitude) # *** 修改：使用 w ***
 current_color = axs_gm[1].lines[0].get_color()
-axs_gm[1].plot(-w_plot, final_magnitude, color=current_color)
+axs_gm[1].plot(-w, final_magnitude, color=current_color) # *** 修改：使用 -w ***
 axs_gm[1].set_title('Calculated Magnitude of Frequency Response', fontsize=12)
-axs_gm[1].set_xlabel('Normalized Frequency (ω / π)')
+axs_gm[1].set_xlabel('Frequency ω (radians)') # *** 修改：X 軸標籤 ***
 axs_gm[1].set_ylabel('|H(e$^{jω}$)|')
-axs_gm[1].set_xlim([-1, 1])
+axs_gm[1].set_xlim([-np.pi, np.pi]) # *** 修改：X 軸範圍 ***
+axs_gm[1].set_xticks(tick_locs) # *** 新增：設定 X 軸刻度 ***
+axs_gm[1].set_xticklabels(tick_labels) # *** 新增：設定 X 軸標籤 ***
 axs_gm[1].grid(True, linestyle=':')
 
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])
@@ -165,7 +186,6 @@ plt.show() # *** 顯示第二張圖 ***
 
 print("--- Q2繪圖完成 ---")
 
-# ==============================================================================
 # 4. 執行緒序 (Q3): 分析 x[n] 的波形與 DTFT
 # ==============================================================================
 print("\n--- 執行 Q3：分析 x[n] 並繪圖... ---")
@@ -204,7 +224,6 @@ plt.show() # *** 顯示 Q3 的圖窗 ***
 
 print("--- Q3 繪圖完成 ---")
 
-# ==============================================================================
 # 5. 執行緒序 (Q4): 將 x[n] 輸入 LCCDE 並繪製 y[n]
 # ==============================================================================
 print("\n--- 執行 Q4：執行 LCCDE 濾波並繪製 y[n]... ---")
@@ -224,7 +243,7 @@ ax_q4.set_title('Waveform of output signal y[n] (Calculated from Formula)', font
 ax_q4.set_xlabel('Sample number (n)', fontsize=12)
 ax_q4.set_ylabel('Amplitude', fontsize=12)
 ax_q4.set_xlim([0, TOTAL_LENGTH])
-ax_q4.set_ylim([-4, 5]) # 根據 Q4 實際輸出調整 Y 軸 (之前是 -2 到 2)
+ax_q4.set_ylim([-6, 6]) # 根據 Q4 實際輸出調整 Y 軸 (之前是 -2 到 2)
 ax_q4.grid(True, linestyle=':')
 
 plt.tight_layout()
